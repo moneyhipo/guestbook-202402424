@@ -5,7 +5,7 @@ import { ensureSchema, getSql, type Entry } from "@/lib/db";
 // 항상 최신 목록을 보여주도록 요청마다 렌더링
 export const dynamic = "force-dynamic";
 
-const DEVELOPER_NAME = "홍길동"; // TODO: 본인 이름으로 변경
+const DEVELOPER_NAME = "윤재건";
 const STUDENT_ID = "202402424";
 
 async function getEntries(): Promise<Entry[]> {
