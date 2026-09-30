@@ -46,6 +46,9 @@ export default function DinoGame({ onClose }: { onClose: () => void }) {
     };
 
     const onKey = (e: KeyboardEvent) => {
+      // 방명록 입력칸에서 타이핑할 때는 게임 키로 쓰지 않음
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("input, textarea")) return;
       if (e.code === "Space" || e.code === "ArrowUp") {
         e.preventDefault();
         jump();
