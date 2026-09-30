@@ -4,8 +4,8 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Vitest가 dev 의존성으로 추가되고 `@/` 경로 별칭을 인식한다
-- [ ] `npm run test`가 테스트를 한 번 실행하고 종료한다 (watch 모드 아님)
-- [ ] 타입 검사와 `npm run build`가 여전히 통과한다
+- [x] Vitest가 dev 의존성으로 추가되고 `@/` 경로 별칭을 인식한다
+- [x] `npm run test`가 테스트를 한 번 실행하고 종료한다 (watch 모드 아님)
+- [x] 타입 검사와 `npm run build`가 여전히 통과한다

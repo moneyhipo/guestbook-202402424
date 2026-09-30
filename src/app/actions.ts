@@ -3,6 +3,7 @@
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { ensureSchema, getSql } from "@/lib/db";
+import { LOCK_MS, MAX_FAILED_ATTEMPTS, checkAttempt, recordFailure, type LockState } from "@/lib/lockout";
 
 export type ActionResult = { ok: boolean; error?: string };
 
@@ -10,15 +11,37 @@ function str(v: FormDataEntryValue | null) {
   return typeof v === "string" ? v.trim() : "";
 }
 
+// 잠금 확인 → 비밀번호 비교 → 실패 시 잠금 상태 저장 (docs/adr/0001)
 async function checkPassword(id: number, password: string): Promise<ActionResult> {
   const sql = getSql();
-  const rows = (await sql`select password_hash from guestbook_entries where id = ${id}`) as {
-    password_hash: string;
-  }[];
+  const rows = (await sql`
+    select password_hash, failed_attempts, locked_until from guestbook_entries where id = ${id}
+  `) as { password_hash: string; failed_attempts: number; locked_until: string | null }[];
   if (rows.length === 0) return { ok: false, error: "존재하지 않는 글입니다." };
-  const match = await bcrypt.compare(password, rows[0].password_hash);
-  if (!match) return { ok: false, error: "비밀번호가 일치하지 않습니다." };
-  return { ok: true };
+
+  const row = rows[0];
+  const state: LockState = {
+    failedAttempts: row.failed_attempts,
+    lockedUntil: row.locked_until ? new Date(row.locked_until) : null,
+  };
+  const now = new Date();
+  const attempt = checkAttempt(state, now);
+  if (!attempt.allowed) {
+    return { ok: false, error: `잠시 후 다시 시도하세요. (${Math.ceil(attempt.retryAfterMs / 1000)}초 남음)` };
+  }
+
+  if (await bcrypt.compare(password, row.password_hash)) return { ok: true };
+
+  const failure = recordFailure(state, now);
+  await sql`
+    update guestbook_entries
+    set failed_attempts = ${failure.state.failedAttempts}, locked_until = ${failure.state.lockedUntil}
+    where id = ${id}
+  `;
+  if (failure.locked) {
+    return { ok: false, error: `비밀번호를 ${MAX_FAILED_ATTEMPTS}회 틀려 ${LOCK_MS / 1000}초간 잠겼습니다.` };
+  }
+  return { ok: false, error: `비밀번호가 일치하지 않습니다. (남은 시도 ${failure.remainingAttempts}회)` };
 }
 
 export async function createEntry(_: ActionResult | null, formData: FormData): Promise<ActionResult> {
@@ -50,7 +73,7 @@ export async function updateEntry(id: number, message: string, password: string)
   if (!check.ok) return check;
 
   const sql = getSql();
-  await sql`update guestbook_entries set message = ${message}, updated_at = now() where id = ${id}`;
+  await sql`update guestbook_entries set message = ${message}, updated_at = now(), failed_attempts = 0, locked_until = null where id = ${id}`;
   revalidatePath("/");
   return { ok: true };
 }

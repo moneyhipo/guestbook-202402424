@@ -30,6 +30,8 @@ async function migrate() {
     )
   `;
   await sql`alter table guestbook_entries add column if not exists likes integer not null default 0`;
+  await sql`alter table guestbook_entries add column if not exists failed_attempts integer not null default 0`;
+  await sql`alter table guestbook_entries add column if not exists locked_until timestamptz`;
 }
 
 // 첫 요청 시 테이블/컬럼이 없으면 생성 (db/schema.sql 과 동일)

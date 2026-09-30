@@ -1,6 +1,6 @@
 # Spec: 방명록 번외 기능 (글자 수 · 좋아요 · 연속 실패 잠금 · 더 보기)
 
-**Status:** ready-for-agent
+**Status:** implemented
 
 ## Problem Statement
 

@@ -10,3 +10,7 @@ create table if not exists guestbook_entries (
 
 -- TICKET 04: 좋아요
 alter table guestbook_entries add column if not exists likes integer not null default 0;
+
+-- TICKET 05: 비밀번호 연속 실패 잠금
+alter table guestbook_entries add column if not exists failed_attempts integer not null default 0;
+alter table guestbook_entries add column if not exists locked_until timestamptz;
