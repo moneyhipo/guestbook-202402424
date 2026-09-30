@@ -1,4 +1,5 @@
 import Link from "next/link";
+import DeveloperName from "@/components/DeveloperName";
 import EntryForm from "@/components/EntryForm";
 import EntryItem from "@/components/EntryItem";
 import { ensureSchema, getSql, type Entry } from "@/lib/db";
@@ -34,9 +35,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
     <main className="mx-auto w-full max-w-2xl flex-1 space-y-6 px-4 py-10">
       <header className="space-y-1">
         <h1 className="text-3xl font-bold">방명록</h1>
-        <p className="text-sm text-gray-600">
-          개발자: {DEVELOPER_NAME} ({STUDENT_ID})
-        </p>
+        <DeveloperName name={DEVELOPER_NAME} studentId={STUDENT_ID} />
       </header>
 
       <EntryForm />
