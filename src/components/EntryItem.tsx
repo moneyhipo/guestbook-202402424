@@ -52,7 +52,7 @@ export default function EntryItem({ entry }: { entry: Entry }) {
 
       {mode === "view" ? (
         <div className="mt-3 flex justify-end gap-2">
-          <LikeButton entryId={entry.id} likes={entry.likes} />
+          <LikeButton entryId={entry.id} likeCount={entry.likes} />
           <button onClick={() => reset("edit")} className="btn-secondary">수정</button>
           <button onClick={() => reset("delete")} className="btn-danger">삭제</button>
         </div>

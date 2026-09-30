@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { UNLOCKED, checkAttempt, recordFailure, type LockState } from "@/lib/lockout";
+import { UNLOCKED, checkAttempt, recordFailure, recordSuccess, type LockState } from "@/lib/lockout";
 
 const t0 = new Date("2026-09-30T06:00:00Z");
 const after = (ms: number) => new Date(t0.getTime() + ms);
@@ -44,9 +44,17 @@ describe("비밀번호 연속 실패 잠금 정책", () => {
     expect(recordFailure(unlockedAgain, after(5000))).toMatchObject({ locked: false, remainingAttempts: 4 });
   });
 
-  test("성공하면 연속 실패가 초기화된다", () => {
-    // 성공 시 상태는 UNLOCKED로 되돌린다: 이후 첫 실패는 다시 남은 시도 4회
-    expect(checkAttempt(UNLOCKED, t0)).toEqual({ allowed: true });
-    expect(recordFailure(UNLOCKED, t0).remainingAttempts).toBe(4);
+  test("4번 틀린 뒤 성공하면 다음 실패는 다시 남은 시도 4회부터 센다", () => {
+    const afterSuccess = recordSuccess();
+    expect(failTimes(4).failedAttempts).toBe(4);
+    expect(recordFailure(afterSuccess, t0)).toMatchObject({ locked: false, remainingAttempts: 4 });
+  });
+
+  test("잠긴 동안의 시도는 잠금 시간을 늘리지 않는다", () => {
+    const locked = failTimes(5);
+    // 잠금 중에는 checkAttempt가 거부하고 상태를 바꾸지 않으므로, 해제 시각은 처음 잠긴 시점 기준 그대로다
+    expect(checkAttempt(locked, after(1000)).allowed).toBe(false);
+    expect(checkAttempt(locked, after(3000)).allowed).toBe(false);
+    expect(checkAttempt(locked, after(5000))).toEqual({ allowed: true });
   });
 });

@@ -31,3 +31,8 @@ export function recordFailure(state: LockState, now: Date): FailureResult {
     remainingAttempts: MAX_FAILED_ATTEMPTS - failedAttempts,
   };
 }
+
+// 비밀번호가 맞으면 연속 실패와 잠금을 모두 지운다
+export function recordSuccess(): LockState {
+  return UNLOCKED;
+}

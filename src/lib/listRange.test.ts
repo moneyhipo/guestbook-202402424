@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { PAGE_SIZE, nextLimit, parseListLimit } from "@/lib/listRange";
+import { SHOW_MORE_STEP, canCollapse, nextLimit, parseListLimit } from "@/lib/listRange";
 
 describe("목록 범위 정책", () => {
   test("limit이 없으면 처음 5개를 보여준다", () => {
@@ -29,7 +29,21 @@ describe("목록 범위 정책", () => {
   });
 
   test("더 보기를 누르면 5개를 더 보여준다", () => {
-    expect(PAGE_SIZE).toBe(5);
-    expect(nextLimit(5)).toBe(10);
+    expect(SHOW_MORE_STEP).toBe(5);
+    expect(nextLimit(5, 12)).toBe(10);
+  });
+
+  test("남은 글이 없으면 더 보기가 없다", () => {
+    expect(nextLimit(10, 10)).toBeNull();
+    expect(nextLimit(5, 3)).toBeNull();
+  });
+
+  test("500개 한도에 닿으면 글이 더 있어도 더 보기가 없다", () => {
+    expect(nextLimit(500, 800)).toBeNull();
+  });
+
+  test("처음 5개보다 많이 펼쳤을 때만 접을 수 있다", () => {
+    expect(canCollapse(5)).toBe(false);
+    expect(canCollapse(10)).toBe(true);
   });
 });

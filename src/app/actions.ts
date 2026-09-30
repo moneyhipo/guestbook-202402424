@@ -3,7 +3,7 @@
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { ensureSchema, getSql } from "@/lib/db";
-import { LOCK_MS, MAX_FAILED_ATTEMPTS, checkAttempt, recordFailure, type LockState } from "@/lib/lockout";
+import { LOCK_MS, MAX_FAILED_ATTEMPTS, checkAttempt, recordFailure, recordSuccess, type LockState } from "@/lib/lockout";
 
 export type ActionResult = { ok: boolean; error?: string };
 
@@ -73,7 +73,13 @@ export async function updateEntry(id: number, message: string, password: string)
   if (!check.ok) return check;
 
   const sql = getSql();
-  await sql`update guestbook_entries set message = ${message}, updated_at = now(), failed_attempts = 0, locked_until = null where id = ${id}`;
+  const reset = recordSuccess();
+  await sql`
+    update guestbook_entries
+    set message = ${message}, updated_at = now(),
+        failed_attempts = ${reset.failedAttempts}, locked_until = ${reset.lockedUntil}
+    where id = ${id}
+  `;
   revalidatePath("/");
   return { ok: true };
 }
@@ -94,7 +100,7 @@ export async function deleteEntry(id: number, password: string): Promise<ActionR
 export type LikeResult = { ok: true; likes: number } | { ok: false; error: string };
 
 // 좋아요 중복 방지는 브라우저가 담당 (docs/adr/0002)
-export async function toggleLike(id: number, like: boolean): Promise<LikeResult> {
+export async function setLike(id: number, like: boolean): Promise<LikeResult> {
   await ensureSchema();
   const sql = getSql();
   const rows = (like
