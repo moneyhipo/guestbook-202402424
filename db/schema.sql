@@ -7,3 +7,6 @@ create table if not exists guestbook_entries (
   created_at timestamptz not null default now(),
   updated_at timestamptz
 );
+
+-- TICKET 04: 좋아요
+alter table guestbook_entries add column if not exists likes integer not null default 0;

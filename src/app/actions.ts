@@ -67,3 +67,19 @@ export async function deleteEntry(id: number, password: string): Promise<ActionR
   revalidatePath("/");
   return { ok: true };
 }
+
+export type LikeResult = { ok: true; likes: number } | { ok: false; error: string };
+
+// 좋아요 중복 방지는 브라우저가 담당 (docs/adr/0002)
+export async function toggleLike(id: number, like: boolean): Promise<LikeResult> {
+  await ensureSchema();
+  const sql = getSql();
+  const rows = (like
+    ? await sql`update guestbook_entries set likes = likes + 1 where id = ${id} returning likes`
+    : await sql`update guestbook_entries set likes = greatest(likes - 1, 0) where id = ${id} returning likes`) as {
+    likes: number;
+  }[];
+  if (rows.length === 0) return { ok: false, error: "존재하지 않는 글입니다." };
+  revalidatePath("/");
+  return { ok: true, likes: rows[0].likes };
+}

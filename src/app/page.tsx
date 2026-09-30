@@ -16,7 +16,7 @@ async function getEntries(limit: number) {
   // limit + 1개를 가져와 남은 글이 있는지 판단
   const [rowResult, countResult] = await Promise.all([
     sql`
-      select id, name, message, created_at, updated_at
+      select id, name, message, likes, created_at, updated_at
       from guestbook_entries
       order by created_at desc, id desc
       limit ${limit + 1}
